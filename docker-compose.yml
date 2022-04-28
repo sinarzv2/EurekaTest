@@ -1,0 +1,95 @@
+version: "3.9"
+
+networks:
+  my-network:
+    driver: bridge
+
+volumes:
+  sql-data: 
+services:
+  db:
+     container_name: 'sqlserver'
+     image: "mcr.microsoft.com/mssql/server"
+     environment:
+        SA_PASSWORD: "Sina_Razavi123"
+        ACCEPT_EULA: "Y"
+     ports:
+       - "1433:1433"
+     volumes:
+       - sql-data:/var/lib/sqlserver/data
+     networks:
+       - my-network
+
+  eurekaserver:
+     image: "steeltoeoss/eureka-server"
+     container_name: 'eureka-server'
+     ports:
+       - "8761:8761"
+     networks:
+       - my-network
+
+  
+  api-gateway:
+     container_name: 'APIGateway'
+     build:
+       context: ./APIGateway
+       dockerfile: Dockerfile
+     ports:
+       - "9000:80"
+     networks:
+       - my-network
+     depends_on:
+       - eurekaserver
+
+
+  Auth-service:
+     container_name: 'auth-service'
+     image : auth-service
+     build:
+       context: ./AuthService
+       dockerfile: Dockerfile
+     ports:
+       - "5000:80"
+     networks:
+       - my-network
+     depends_on:
+       - eurekaserver
+       - db
+    
+  customer-service:
+     container_name: 'customer-service'
+     image : customer-service
+     build:
+       context: ./CustomersAPIServices
+       dockerfile: Dockerfile
+     ports:
+       - "9001:80"
+     networks:
+       - my-network
+     depends_on:
+       - eurekaserver
+
+
+  product-service1:
+     container_name: 'ProductsAPIServices1'
+     build:
+       context: ./ProductsAPIServices
+       dockerfile: Dockerfile
+     ports:
+       - "9002:80"
+     networks:
+       - my-network
+     depends_on:
+       - eurekaserver
+
+  product-service2:
+     container_name: 'ProductsAPIServices2'
+     build:
+       context: ./ProductsAPIServices2
+       dockerfile: Dockerfile
+     ports:
+       - "9003:80"
+     networks:
+       - my-network
+     depends_on:
+       - eurekaserver
